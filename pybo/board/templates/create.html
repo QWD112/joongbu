@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<body>
+    <h1>글쓰기</h1>
+    <form method="post">
+        제목: <input type="text" name="title" id="title"><br><br>
+        작성자: <input type="text" name="author" id="author"><br><br>
+        내용: <textarea name="content" id="content"></textarea><br><br>
+        <input type="button" value="저장" onclick="
+            if(document.getElementById('title').value==''
+            || document.getElementById('content').value==''
+            || document.getElementById('author').value==''){
+                alert('모든 항목을 입력해주세요');
+            } else {
+                document.querySelector('form').submit();
+            }
+        ">
+        <input type="button" value="취소" onclick="location.href='/'">
+    </form>
+</body>
+</html>
