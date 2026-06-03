@@ -310,4 +310,4 @@ def empty():
     return render_template('empty.html')
 
 
-# app.run(debug=True)
+app.run(debug=True)

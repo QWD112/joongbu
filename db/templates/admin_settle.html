@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>마감 정산 — IndieVault</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Space+Grotesk:wght@700&display=swap');
+:root{
+  --bg:#fffdf5;--surface:#fff;--surface2:#fef9ee;
+  --gold:#f59e0b;--gold2:#fbbf24;--gold3:#fde68a;--gold-dark:#d97706;
+  --text:#1c1a14;--text2:#6b6044;--text3:#a89060;
+  --border:#f0e4c0;--green:#16a34a;--red:#dc2626;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+nav{background:rgba(255,253,245,.95);border-bottom:2px solid #fecaca;padding:0 32px;height:60px;display:flex;align-items:center;gap:16px}
+.logo{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;color:#b91c1c;letter-spacing:2px}
+.logo em{color:var(--gold-dark);font-style:normal}
+.back{font-size:.82rem;color:var(--text2);text-decoration:none;padding:6px 12px;border-radius:8px;border:1.5px solid var(--border)}
+.back:hover{border-color:var(--gold);color:var(--gold-dark)}
+.main{max-width:1100px;margin:0 auto;padding:32px 24px 80px}
+h1{font-size:1.4rem;font-weight:700;margin-bottom:20px}
+
+/* flash */
+.flash{padding:13px 18px;border-radius:10px;font-size:.88rem;font-weight:500;margin-bottom:22px;display:flex;align-items:center;gap:8px}
+.flash-ok  {background:#dcfce7;border:1.5px solid #bbf7d0;color:var(--green)}
+.flash-err {background:#fef2f2;border:1.5px solid #fecaca;color:var(--red)}
+.flash-warn{background:#fffbeb;border:1.5px solid var(--gold3);color:var(--gold-dark)}
+
+.section{margin-bottom:36px}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:.95rem;font-weight:700}
+
+/* 테이블 */
+.tbl-wrap{background:var(--surface);border:2px solid var(--border);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:11px 14px;text-align:left;font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;border-bottom:2px solid var(--border);background:var(--surface2)}
+td{padding:12px 14px;font-size:.83rem;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.empty td{text-align:center;color:var(--text3);padding:24px}
+.rate-s{color:var(--green);font-weight:700}
+.rate-f{color:var(--red);font-weight:700}
+
+/* 뱃지 */
+.pill{padding:3px 10px;border-radius:10px;font-size:.7rem;font-weight:700;display:inline-block}
+.pill-s   {background:#dcfce7;color:var(--green);border:1px solid #bbf7d0}
+.pill-done{background:#dcfce7;color:var(--green);border:1px solid #bbf7d0}
+
+/* 환불 버튼 */
+.act-red{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:7px;background:var(--red);color:#fff;font-family:'Noto Sans KR',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;border:none;transition:all .15s}
+.act-red:hover{background:#b91c1c;box-shadow:0 2px 8px rgba(220,38,38,.3);transform:translateY(-1px)}
+.refund-chip{display:inline-flex;align-items:center;gap:5px;background:#fef2f2;border:1.5px solid #fecaca;border-radius:7px;padding:5px 11px;font-size:.76rem;color:#7f1d1d;margin-right:8px}
+.refund-chip strong{color:var(--red);font-weight:700}
+.done-chip{display:inline-flex;align-items:center;gap:5px;background:#dcfce7;border:1.5px solid #bbf7d0;border-radius:7px;padding:5px 11px;font-size:.76rem;color:var(--green);font-weight:700}
+</style>
+</head>
+<body>
+<nav>
+  <span class="logo">INDIE<em>VAULT</em> — ADMIN</span>
+  <a href="/admin/" class="back">← 대시보드</a>
+</nav>
+
+<div class="main">
+  <h1>📋 마감 프로젝트 정산 관리</h1>
+
+  {% if flash_msg %}
+    {% if flash_msg.startswith('ok') %}
+      {% if flash_msg == 'ok_nofunders' %}
+      <div class="flash flash-warn">ℹ️ 후원자가 없는 프로젝트입니다. 환불 처리 완료로 표시했습니다.</div>
+      {% else %}
+      {% set cnt = flash_msg.split('cnt=')[1] if 'cnt=' in flash_msg else '?' %}
+      <div class="flash flash-ok">✅ 환불 완료! 후원자 {{ cnt }}명에게 포인트가 일괄 환불되었습니다.</div>
+      {% endif %}
+    {% elif flash_msg == 'err_already' %}
+    <div class="flash flash-err">⚠️ 이미 환불 처리된 프로젝트입니다.</div>
+    {% elif flash_msg == 'err_notfound' %}
+    <div class="flash flash-err">❌ 프로젝트를 찾을 수 없습니다.</div>
+    {% elif flash_msg == 'err_rollback' %}
+    <div class="flash flash-err">🔴 오류 발생 — 트랜잭션이 롤백되었습니다. 데이터는 변경되지 않았습니다.</div>
+    {% endif %}
+  {% endif %}
+
+  <!-- 성공 -->
+  <div class="section">
+    <div class="sh" style="color:var(--green)">✅ 성공 프로젝트 (목표 달성) — {{ success|length }}건</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>제목</th><th>창작자</th><th>목표금액</th><th>달성금액</th><th>달성률</th><th>마감일</th><th>상태</th></tr></thead>
+      <tbody>
+        {% if success %}
+          {% for p in success %}{% set r=(p[5]/p[4]*100)|int %}
+          <tr>
+            <td>{{ p[1] }}</td><td>{{ p[6] }}</td>
+            <td>{{ "{:,}".format(p[4]) }}원</td>
+            <td>{{ "{:,}".format(p[5]) }}원</td>
+            <td class="rate-s">{{ r }}%</td><td>{{ p[7] }}</td>
+            <td><span class="pill pill-s">✔ 성공 · 정산완료</span></td>
+          </tr>
+          {% endfor %}
+        {% else %}
+        <tr class="empty"><td colspan="7">성공 프로젝트 없음</td></tr>
+        {% endif %}
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- 실패 + 환불 -->
+  <div class="section">
+    <div class="sh" style="color:var(--red)">❌ 실패 프로젝트 (목표 미달 · 환불 대상) — {{ failed_detail|length }}건</div>
+    <div class="tbl-wrap"><table>
+      <thead>
+        <tr><th>제목</th><th>창작자</th><th>목표금액</th><th>달성금액</th><th>달성률</th><th>후원자</th><th>환불 예정액</th><th>마감일</th><th>환불 처리</th></tr>
+      </thead>
+      <tbody>
+        {% if failed_detail %}
+          {% for item in failed_detail %}
+          {% set p = item.project %}{% set r=(p[5]/p[4]*100)|int %}
+          <tr>
+            <td>{{ p[1] }}</td><td>{{ p[6] }}</td>
+            <td>{{ "{:,}".format(p[4]) }}원</td>
+            <td style="color:var(--red);font-weight:700">{{ "{:,}".format(p[5]) }}원</td>
+            <td class="rate-f">{{ r }}%</td>
+            <td style="font-weight:700">{{ item.funder_cnt }}명</td>
+            <td style="font-weight:700;color:var(--red)">{{ "{:,}".format(item.refund_sum) }}원</td>
+            <td>{{ p[7] }}</td>
+            <td>
+              {% if item.refunded %}
+                <span class="done-chip">✅ 환불완료</span>
+              {% else %}
+                <span class="refund-chip">{{ item.funder_cnt }}명 · <strong>{{ "{:,}".format(item.refund_sum) }}P</strong></span>
+                <form action="/admin/refund/{{ p[0] }}/" method="post" style="display:inline"
+                      onsubmit="return confirmRefund('{{ p[1] }}', {{ item.funder_cnt }}, {{ item.refund_sum }})">
+                  <button type="submit" class="act-red">💸 일괄 환불 실행</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% else %}
+        <tr class="empty"><td colspan="9">실패 프로젝트 없음</td></tr>
+        {% endif %}
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<script>
+function confirmRefund(title, cnt, sum) {
+  return confirm(
+    `[일괄 환불 실행]\n\n프로젝트: ${title}\n환불 대상: 후원자 ${cnt}명\n환불 총액: ${sum.toLocaleString()}P\n\n트랜잭션으로 일괄 처리됩니다. 실행하시겠습니까?`
+  );
+}
+</script>
+</body>
+</html>

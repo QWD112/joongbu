@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>IndieVault — 인디 게임 펀딩</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap');
+:root{
+  --bg:#fffdf5;--bg2:#fff8e7;--surface:#ffffff;--surface2:#fef9ee;
+  --gold:#f59e0b;--gold2:#fbbf24;--gold3:#fde68a;--gold-dark:#d97706;
+  --text:#1c1a14;--text2:#6b6044;--text3:#a89060;
+  --border:#f0e4c0;--border2:#e8d5a0;
+  --green:#16a34a;--red:#dc2626;--blue:#2563eb;
+  --shadow:0 2px 12px rgba(245,158,11,.12);
+  --shadow-lg:0 8px 32px rgba(245,158,11,.18);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── NAV ── */
+nav{position:sticky;top:0;z-index:200;background:rgba(255,253,245,.92);backdrop-filter:blur(16px);border-bottom:2px solid var(--gold3);padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(245,158,11,.1)}
+.logo{font-family:'Space Grotesk',sans-serif;font-size:1.25rem;font-weight:700;color:var(--gold-dark);letter-spacing:2px;text-decoration:none}
+.logo span{color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.user-chip{background:var(--gold3);color:var(--gold-dark);padding:4px 14px;border-radius:20px;font-size:.8rem;font-weight:700}
+.btn{padding:7px 16px;border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .18s}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#fff;box-shadow:0 2px 8px rgba(245,158,11,.3)}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,158,11,.4)}
+.btn-outline{background:transparent;border:1.5px solid var(--border2);color:var(--text2)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold-dark)}
+.btn-admin{background:rgba(220,38,38,.08);border:1.5px solid rgba(220,38,38,.25);color:#dc2626}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 50%,#fde68a 100%);padding:48px 32px 36px;border-bottom:2px solid var(--gold3);position:relative;overflow:hidden}
+.hero::before{content:'🎮';position:absolute;right:5%;top:50%;transform:translateY(-50%);font-size:7rem;opacity:.12;pointer-events:none}
+.hero h1{font-family:'Space Grotesk',sans-serif;font-size:2.4rem;font-weight:700;color:var(--gold-dark);margin-bottom:8px;line-height:1.2}
+.hero p{color:var(--text2);font-size:.95rem}
+
+/* ── SORT TABS ── */
+.sort-bar{padding:16px 32px 0;display:flex;align-items:center;gap:0;border-bottom:2px solid var(--border)}
+.sort-tab{padding:10px 20px;font-size:.85rem;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:transparent;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .18s;white-space:nowrap}
+.sort-tab:hover{color:var(--gold-dark)}
+.sort-tab.active{color:var(--gold-dark);border-bottom-color:var(--gold);font-weight:700}
+
+/* ── FILTER ROW ── */
+.filter-row{padding:14px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface2);border-bottom:1px solid var(--border)}
+.filter-label{font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-weight:700}
+.genre-chip{padding:5px 14px;border-radius:20px;font-size:.78rem;cursor:pointer;border:1.5px solid var(--border2);background:transparent;color:var(--text2);transition:all .18s}
+.genre-chip.active,.genre-chip:hover{background:var(--gold);border-color:var(--gold);color:#fff}
+.sep{width:1px;height:22px;background:var(--border2)}
+.toggle-wrap{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text2);cursor:pointer;user-select:none}
+.toggle{position:relative;width:40px;height:22px}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:#ddd;border-radius:11px;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+.toggle-slider{background:var(--gold)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+
+/* ── GRID ── */
+.main{padding:24px 32px 60px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:24px;transition:all .28s;cursor:pointer;position:relative;overflow:hidden}
+.card:hover{border-color:var(--gold);box-shadow:var(--shadow-lg);transform:translateY(-4px)}
+.card.closed-card{opacity:.75;background:var(--bg2)}
+
+/* badge row */
+.card-top{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.genre-tag{padding:3px 10px;border-radius:4px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:var(--gold3);color:var(--gold-dark)}
+.urgent-badge{padding:3px 10px;border-radius:4px;font-size:.7rem;font-weight:700;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;animation:pulse 1.5s ease-in-out infinite}
+.closing-badge{padding:3px 10px;border-radius:4px;font-size:.7rem;font-weight:700;background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+.closed-badge{padding:3px 10px;border-radius:4px;font-size:.7rem;font-weight:700;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+.card h3{font-size:1.05rem;font-weight:700;margin-bottom:6px;line-height:1.4;color:var(--text)}
+.card-desc{font-size:.82rem;color:var(--text2);line-height:1.6;margin-bottom:16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* progress */
+.progress-bar{height:8px;background:#f3e9cc;border-radius:4px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.fill-normal{background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.fill-success{background:linear-gradient(90deg,#f59e0b,#fbbf24,#fcd34d);box-shadow:0 0 8px rgba(251,191,36,.5)}
+.fill-near{background:linear-gradient(90deg,#ef4444,#f97316)}
+
+.progress-meta{display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:14px}
+.rate-text{font-weight:700}
+.rate-normal{color:var(--gold-dark)}
+.rate-success{color:#b45309}
+.card-footer{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text3);border-top:1px solid var(--border);padding-top:12px}
+.days-urgent{color:#dc2626;font-weight:700}
+.days-soon{color:#ea580c;font-weight:600}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:80px 20px;color:var(--text3)}
+.empty .emoji{font-size:3rem;margin-bottom:12px}
+
+/* ── LOADING FADE ── */
+.card{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── MODAL ── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:20px;padding:36px 32px;width:420px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;animation:modalIn .22s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.modal h3{font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:8px}
+.modal .amount-display{font-size:2rem;font-weight:900;color:var(--gold-dark);margin:16px 0}
+.modal p{font-size:.88rem;color:var(--text2);margin-bottom:20px}
+.modal-btns{display:flex;gap:12px;justify-content:center}
+.modal-confirm{flex:1;padding:12px;background:linear-gradient(135deg,var(--gold),var(--gold2));border:none;border-radius:10px;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.modal-confirm:hover{box-shadow:0 4px 14px rgba(245,158,11,.4)}
+.modal-cancel{flex:1;padding:12px;background:#f8f8f8;border:1.5px solid #e0e0e0;border-radius:10px;color:#666;font-size:.88rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+
+/* toast */
+.toast{position:fixed;bottom:32px;right:32px;background:#1c1a14;color:#fff;padding:14px 22px;border-radius:10px;font-size:.88rem;z-index:2000;transform:translateY(80px);opacity:0;transition:.3s;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.error{background:#dc2626}
+.toast.success{background:#16a34a}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">INDIE<span>VAULT</span></a>
+  <div class="nav-right">
+    <span class="user-chip">👤 {{ session['username'] }}</span>
+    {% if session.get('role') == 'admin' %}
+    <a href="/admin/" class="btn btn-admin">관리자 페이지</a>
+    {% endif %}
+    <a href="/project/create/" class="btn btn-gold">+ 프로젝트 등록</a>
+    <a href="/logout/" class="btn btn-outline">로그아웃</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <h1>인디 게임을 현실로</h1>
+  <p>좋아하는 개발자를 후원하고, 함께 게임을 만들어 나가세요 ✨</p>
+</div>
+
+<!-- 정렬 탭 -->
+<div class="sort-bar">
+  <button class="sort-tab" data-sort="rate">🏆 달성률순</button>
+  <button class="sort-tab" data-sort="popular">🔥 인기순</button>
+  <button class="sort-tab" data-sort="deadline">⏰ 마감임박순</button>
+  <button class="sort-tab" data-sort="newest">✨ 최신 등록순</button>
+</div>
+
+<!-- 장르 필터 + 토글 -->
+<div class="filter-row">
+  <span class="filter-label">장르</span>
+  <button class="genre-chip active" data-genre="">전체</button>
+  {% for g in genres %}
+  <button class="genre-chip" data-genre="{{ g }}">{{ g }}</button>
+  {% endfor %}
+  <div class="sep"></div>
+  <label class="toggle-wrap">
+    <span>마감 프로젝트 포함</span>
+    <span class="toggle">
+      <input type="checkbox" id="toggleClosed">
+      <span class="toggle-slider"></span>
+    </span>
+  </label>
+</div>
+
+<div class="main">
+  <div id="grid"></div>
+  <div id="empty" class="empty" style="display:none">
+    <div class="emoji">🎮</div>
+    <p>해당 조건의 프로젝트가 없습니다.</p>
+  </div>
+</div>
+
+<!-- 후원 확인 모달 -->
+<div class="modal-bg" id="fundModal">
+  <div class="modal">
+    <h3>🎮 후원 확인</h3>
+    <div class="amount-display" id="modalAmount">0원</div>
+    <p id="modalProject">프로젝트명</p>
+    <p style="font-size:.8rem;color:#999">보유 포인트에서 차감됩니다.</p>
+    <div class="modal-btns">
+      <button class="modal-confirm" id="modalConfirm">후원하기 ✨</button>
+      <button class="modal-cancel" onclick="closeModal()">취소</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 상태 ──────────────────────────────────────────────
+let allProjects = {{ projects | tojson }};
+let currentSort  = 'rate';
+let currentGenre = '';
+let showClosed   = false;
+
+// URL 파라미터로 초기값 설정
+const params = new URLSearchParams(location.search);
+if(params.get('sort')) currentSort = params.get('sort');
+if(params.get('genre')) currentGenre = params.get('genre');
+
+// ── 정렬 함수 ─────────────────────────────────────────
+function sortProjects(arr, sort){
+  const a = [...arr];
+  if(sort === 'rate')     return a.sort((x,y) => y.rate - x.rate);
+  if(sort === 'popular')  return a.sort((x,y) => (y.funder_count - x.funder_count) || (y.recent_amount - x.recent_amount));
+  if(sort === 'deadline') return a.sort((x,y) => x.days_left - y.days_left);
+  if(sort === 'newest')   return a.sort((x,y) => y.created_date.localeCompare(x.created_date));
+  return a;
+}
+
+// ── 렌더 ─────────────────────────────────────────────
+function renderGrid(){
+  let data = allProjects.filter(p => {
+    if(!showClosed && p.status === 'closed') return false;
+    if(currentGenre && p.genre !== currentGenre) return false;
+    return true;
+  });
+  data = sortProjects(data, currentSort);
+
+  const grid  = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  if(data.length === 0){ grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  grid.innerHTML = data.map((p,i) => {
+    const rate       = p.rate;
+    const isClosed   = p.status === 'closed';
+    const isUrgent   = !isClosed && p.days_left >= 0 && p.days_left <= 2;
+    const isClosing  = !isClosed && p.days_left > 2  && p.days_left <= 7;
+    const isNearGoal = !isClosed && rate >= 80 && rate < 100;
+
+    // progress class
+    let fillClass = 'fill-normal';
+    if(rate >= 100)     fillClass = 'fill-success';
+    else if(isNearGoal) fillClass = 'fill-near';
+
+    const fillW = Math.min(rate, 200);   // 초과 달성도 bar에 표시(max 200%)
+
+    // rate text
+    let rateClass = 'rate-normal';
+    if(rate >= 100) rateClass = 'rate-success';
+
+    // badges
+    let badges = `<span class="genre-tag">${p.genre}</span>`;
+    if(isClosed)        badges += `<span class="closed-badge">⏹ 마감</span>`;
+    else if(isUrgent)   badges += `<span class="urgent-badge">🔥 마감 무산 위기!</span>`;
+    else if(isClosing)  badges += `<span class="closing-badge">⏰ 마감 임박</span>`;
+    if(rate >= 100 && !isClosed) badges += `<span class="closing-badge" style="background:#fef3c7;color:#b45309;border-color:#fde68a">🏆 목표 달성!</span>`;
+
+    // days left text
+    let daysText = '';
+    if(isClosed){
+      daysText = `<span>마감됨 ${p.deadline}</span>`;
+    } else if(p.days_left < 0){
+      daysText = `<span class="days-urgent">마감 초과</span>`;
+    } else if(p.days_left === 0){
+      daysText = `<span class="days-urgent">오늘 마감!</span>`;
+    } else if(p.days_left <= 2){
+      daysText = `<span class="days-urgent">D-${p.days_left}</span>`;
+    } else if(p.days_left <= 7){
+      daysText = `<span class="days-soon">D-${p.days_left}</span>`;
+    } else {
+      daysText = `<span>D-${p.days_left}</span>`;
+    }
+
+    return `
+    <div class="card ${isClosed?'closed-card':''}" style="animation-delay:${i*0.04}s"
+         onclick="location.href='/project/${p.id}/'">
+      <div class="card-top">${badges}</div>
+      <h3>${p.title}</h3>
+      <p class="card-desc">${p.description}</p>
+      <div class="progress-bar">
+        <div class="progress-fill ${fillClass}" style="width:${Math.min(fillW,100)}%"></div>
+      </div>
+      <div class="progress-meta">
+        <span class="rate-text ${rateClass}">${rate.toFixed(1)}% 달성</span>
+        <span>${p.current_amount.toLocaleString()}원 / ${p.goal_amount.toLocaleString()}원</span>
+      </div>
+      <div class="card-footer">
+        <span>by ${p.creator} · 👥 ${p.funder_count}명</span>
+        ${daysText}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── 탭 이벤트 ─────────────────────────────────────────
+document.querySelectorAll('.sort-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentSort = tab.dataset.sort;
+    renderGrid();
+  });
+});
+
+// ── 장르 필터 이벤트 ──────────────────────────────────
+document.querySelectorAll('.genre-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.genre-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentGenre = chip.dataset.genre;
+    // Fetch API로 서버에서 새 데이터
+    fetchProjects();
+  });
+});
+
+// ── 토글 이벤트 ───────────────────────────────────────
+document.getElementById('toggleClosed').addEventListener('change', e => {
+  showClosed = e.target.checked;
+  fetchProjects();
+});
+
+// ── Fetch API ─────────────────────────────────────────
+async function fetchProjects(){
+  const params = new URLSearchParams();
+  if(currentGenre) params.set('genre', currentGenre);
+  if(showClosed)   params.set('show_closed','1');
+  try {
+    const res  = await fetch('/api/projects?' + params.toString());
+    allProjects = await res.json();
+    renderGrid();
+  } catch(e){ showToast('데이터를 불러오지 못했습니다.','error'); }
+}
+
+// ── 초기화 ────────────────────────────────────────────
+(function init(){
+  // 기본 탭 active
+  document.querySelectorAll('.sort-tab').forEach(t => {
+    if(t.dataset.sort === currentSort) t.classList.add('active');
+    else t.classList.remove('active');
+  });
+  // URL 장르 파라미터 처리
+  if(currentGenre){
+    document.querySelectorAll('.genre-chip').forEach(c => {
+      c.classList.toggle('active', c.dataset.genre === currentGenre);
+    });
+  }
+  renderGrid();
+
+  // URL에 error 파라미터 있으면 toast
+  const urlErr = new URLSearchParams(location.search).get('error');
+  if(urlErr === 'points') showToast('⚠️ 보유 포인트가 부족합니다!','error');
+})();
+
+// ── Toast ─────────────────────────────────────────────
+function showToast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type?' '+type:'');
+  setTimeout(() => { t.className = 'toast'; }, 3200);
+}
+
+// ── Modal ─────────────────────────────────────────────
+function closeModal(){ document.getElementById('fundModal').classList.remove('open'); }
+document.getElementById('fundModal').addEventListener('click', e => {
+  if(e.target.id === 'fundModal') closeModal();
+});
+</script>
+</body>
+</html>

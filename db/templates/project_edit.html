@@ -1,0 +1,37 @@
+<!doctype html><html lang="ko"><head><meta charset="UTF-8"><title>개발 소식 — IndieVault</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&family=Space+Grotesk:wght@700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans KR',sans-serif;background:linear-gradient(135deg,#fffbeb,#fef3c7);min-height:100vh;display:flex;align-items:center;justify-content:center}
+.wrap{width:540px}
+.logo{text-align:center;margin-bottom:24px}
+.logo a{font-family:'Space Grotesk',sans-serif;font-size:1.2rem;font-weight:700;color:#d97706;letter-spacing:2px;text-decoration:none}
+.logo a span{color:#f59e0b}
+.card{background:#fff;border-radius:20px;padding:36px;box-shadow:0 8px 32px rgba(245,158,11,.18);border:2px solid #fde68a}
+.card h2{font-size:1.15rem;font-weight:700;margin-bottom:4px}
+.proj{font-size:.83rem;color:#a89060;margin-bottom:22px}
+.proj span{color:#d97706;font-weight:700}
+.field label{display:block;font-size:.8rem;color:#a89060;margin-bottom:7px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.field textarea{width:100%;background:#fffdf5;border:1.5px solid #f0e4c0;border-radius:10px;padding:12px 14px;color:#1c1a14;font-family:'Noto Sans KR',sans-serif;font-size:.9rem;min-height:150px;resize:vertical}
+.field textarea:focus{outline:none;border-color:#f59e0b}
+.actions{display:flex;gap:12px;margin-top:18px}
+.btn-s{flex:1;padding:12px;background:linear-gradient(135deg,#d97706,#f59e0b);border:none;border-radius:10px;color:#fff;font-family:'Noto Sans KR',sans-serif;font-weight:700;cursor:pointer}
+.btn-c{padding:12px 20px;background:transparent;border:1.5px solid #e8d5a0;border-radius:10px;color:#a89060;font-family:'Noto Sans KR',sans-serif;cursor:pointer}
+</style></head><body>
+<div class="wrap">
+  <div class="logo"><a href="/">INDIE<span>VAULT</span></a></div>
+  <div class="card">
+    <h2>📢 개발 소식 등록</h2>
+    <p class="proj">프로젝트: <span>{{ project[1] }}</span></p>
+    <form method="post">
+      <div class="field">
+        <label>업데이트 내용</label>
+        <textarea name="content" id="c" placeholder="개발 진척 상황, 새 기능, 스크린샷 설명 등을 공유해보세요..."></textarea>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn-s" onclick="if(!document.getElementById('c').value.trim()){alert('내용을 입력해주세요');}else{document.querySelector('form').submit();}">등록하기</button>
+        <button type="button" class="btn-c" onclick="location.href='/project/{{ project[0] }}/'">취소</button>
+      </div>
+    </form>
+  </div>
+</div></body></html>
