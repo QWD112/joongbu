@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TICKER 180 — TRADING</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  <style>
+    body { overflow-y: auto; font-size: 13px; }
+    #game-wrap { max-width: 1100px; margin: 0 auto; padding: 0 12px 40px; }
+
+    /* HUD 영역 확장 및 가독성 업 */
+    #game-hud { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 14px; background: var(--bg2); border-bottom: 2px solid var(--green); font-size: 13px; box-sizing: border-box; }
+    #hud-logo { color: var(--green); font-size: 16px; font-weight: 700; letter-spacing: 3px; flex: 1; min-width: 140px; }
+    .hud-chip { background: var(--bg3); border: 1px solid var(--border); padding: 6px 14px; white-space: nowrap; font-size: 13px; font-weight: bold; }
+    .hud-chip span { color: var(--green); }
+    #hud-timer { background: var(--bg3); border: 1px solid var(--yellow); padding: 6px 18px; color: var(--yellow); font-size: 18px; font-weight: bold; letter-spacing: 3px; }
+    #hud-timer.urgent { border-color: var(--red); color: var(--red); animation: blink .5s infinite; }
+
+    .phase-banner { padding: 8px 14px; margin: 10px 0; background: var(--bg2); border: 1px solid var(--border); border-left: 4px solid var(--green); font-size: 13px; letter-spacing: 1px; color: var(--text); }
+    .phase-banner strong { color: var(--green); }
+    .sel-count { color: var(--yellow); font-weight: bold; }
+    .trading-banner { border-left-color: var(--red); }
+
+    /* 1. 대기화면 종목 카드 크기 및 폰트 확장 (세로 대폭 확장) */
+    .stock-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+    .stock-card { background: var(--card); border: 1px solid var(--border); padding: 10px 12px; cursor: pointer; position: relative; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; transition: border-color .15s, background .15s; }
+    .stock-card:hover  { border-color: var(--blue); }
+    .stock-card.selected { border-color: var(--green); background: #0d1f16; }
+    .sel-mark { position: absolute; top: 10px; right: 14px; color: var(--green); font-size: 18px; font-weight: bold; }
+    .sc-tag   { font-size: 12px;  color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+    .sc-name  { font-size: 14px; color: var(--text);  font-family: var(--sans); font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+    .risk-badge { font-size: 11px; padding: 3px 9px; display: inline-block; font-weight: bold; }
+    .risk-high { color: #ff8844; border: 1px solid #ff4422; } .risk-med  { color: #ffaa44; border: 1px solid #ff8822; } .risk-low  { color: var(--green); border: 1px solid var(--green); } .risk-meme { color: #ff44ff; border: 1px solid #cc22cc; } .risk-ext  { color: var(--red); border: 1px solid var(--red); animation: blink 1s infinite; }
+    .sc-price  { font-size: 12px; color: var(--yellow); font-weight: bold; margin-top: 8px; }
+    .sc-vol    { font-size: 12px;  color: var(--muted); margin-top: 4px; }
+
+    .port-section  { margin-bottom: 16px; }
+    .section-label { font-size: 13px; color: var(--muted); letter-spacing: 2px; margin-bottom: 8px; }
+    .port-bar      { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+
+    /* 포트폴리오 슬롯 크기 확장 */
+    .port-slot { background: var(--card); border: 1px solid var(--green); padding: 6px 10px; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+    .port-slot.empty { border-color: var(--border); }
+    .slot-no    { font-size: 11px; color: var(--muted); letter-spacing: 2px; }
+    .slot-name  { font-size: 14px; color: var(--green); font-weight: bold; margin-top: 4px; font-family: var(--sans); }
+    .port-slot.empty .slot-name { color: var(--border); }
+    .slot-group { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .action-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; padding: 12px 0; }
+
+    /* 큰 버튼 튜닝 */
+    .action-row .btn { font-size: 13px; padding: 8px 20px; font-weight: bold; }
+
+    /* 2. 트레이딩 화면 차트 패널 세로 및 폰트 대폭 확장 */
+    .charts-area { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+    .chart-panel { background: var(--card); border: 1px solid var(--border); padding: 10px; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; }
+    .cp-header   { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .cp-tag      { font-size: 14px; color: var(--muted); }
+    .cp-name     { font-size: 16px; color: var(--text); font-family: var(--sans); font-weight: 700; }
+    .cp-group    { font-size: 14px; color: var(--muted); margin-left: auto; }
+
+    /* 주가와 수익률 글씨 대폭 확대 */
+    .cp-price    { font-size: 26px; font-weight: 800; margin: 10px 0; letter-spacing: -1px; }
+    .cp-change   { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+    .cp-price.up, .cp-change.up { color: var(--green); }
+    .cp-price.dn, .cp-change.dn { color: var(--red);   }
+
+    /* 캔버스 세로 높이 확대 */
+    canvas.sparkline { width: 100%; height: 140px; display: block; margin: 12px 0; background: rgba(0, 0, 0, 0.15); }
+
+    /* 보유 자산 정보창 크기 확대 */
+    .cp-hold { font-size: 12px; margin: 5px 0; padding: 6px 8px; background: rgba(0,0,0,0.35); border-radius: 4px; line-height: 1.6; min-height: 54px; font-family: var(--sans); }
+    .pnl-up { color: var(--green); font-weight: bold; }
+    .pnl-dn { color: var(--red); font-weight: bold; }
+
+    .cp-btns { display: flex; gap: 12px; margin-top: 8px; }
+    .trade-btn { flex: 1; padding: 6px 0; cursor: pointer; font-family: var(--mono); font-size: 13px; letter-spacing: 2px; font-weight: 700; border: none; transition: all .12s; }
+    .buy-btn  { background: rgba(0,255,136,.12); color: var(--green); border: 1px solid var(--green) !important; }
+    .buy-btn:hover  { background: var(--green);  color: #000; }
+    .sell-btn { background: rgba(255,68,102,.12); color: var(--red);   border: 1px solid var(--red)   !important; }
+    .sell-btn:hover:not(:disabled) { background: var(--red); color: #fff; }
+    .trade-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    /* 거래 내역 로그 터미널 확장 */
+    .trade-log { background: var(--bg2); border: 1px solid var(--border); padding: 12px 16px; max-height: 160px; overflow-y: auto; font-size: 13px; font-family: var(--mono); line-height: 1.5; }
+    .log-entry { padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.03); }
+    .log-entry.buy  { color: var(--green); } .log-entry.sell { color: var(--red);   } .log-entry.news { color: var(--yellow); } .log-entry.muted { color: var(--muted); }
+    .news-popup { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--bg2); border: 2px solid var(--yellow); padding: 12px 26px; font-size: 16px; color: var(--yellow); font-weight: bold; letter-spacing: 1px; z-index: 200; max-width: 550px; text-align: center; pointer-events: none; animation: fadeIn .3s ease; box-shadow: 0 0 30px rgba(255, 215, 0, 0.2); }
+
+    /* 수량 입력 제어 영역 크기 확대 */
+    .cp-order-form { margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 10px; }
+    .cp-order-inputs { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; flex-wrap: nowrap; }
+    .order-input { width: 75px; height: 34px; background: #000; border: 1px solid var(--border); color: #fff; padding: 4px 10px; font-family: var(--mono); font-size: 16px; font-weight: 700; text-align: right; outline: none; }
+    .order-input:focus { border-color: var(--green); }
+
+    .qty-shortcuts { display: flex; gap: 6px; margin-left: 8px; }
+    .qty-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; font-size: 13px; font-weight: bold; cursor: pointer; border-radius: 4px; font-family: var(--sans); transition: all 0.2s; }
+    .qty-btn:hover { border-color: var(--yellow); color: var(--yellow); background: rgba(255, 215, 0, 0.1); }
+    .est-cost { color: var(--muted); font-size: 14px; font-weight: bold; font-family: var(--mono); }
+
+    .vol-wrap { display: flex; align-items: center; gap: 10px; margin-left: auto; margin-right: 15px; }
+    .vol-wrap span { font-size: 16px; }
+    input[type="range"] { accent-color: var(--green); cursor: pointer; width: 110px; }
+
+    /* 결과창 화면 스케일 업 */
+    .result-wrap { text-align: center; padding: 30px 12px; max-width: 800px; margin: 0 auto; }
+    .result-grade { font-size: 64px; margin-bottom: 12px; }
+    .result-title { font-size: 28px; letter-spacing: 6px; margin-bottom: 6px; font-weight: bold; }
+    .result-title.win { color: var(--green); } .result-title.loss { color: var(--red);   }
+    .result-subtitle { font-size: 14px; color: var(--muted); letter-spacing: 2px; margin-bottom: 20px; font-family: var(--sans); }
+    .result-pnl { font-size: 46px; font-weight: 700; margin: 16px 0; }
+    .result-pnl.win { color: var(--green); } .result-pnl.loss { color: var(--red);   }
+    .result-pct { font-size: 22px; color: var(--muted); }
+    .result-cards { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin: 24px 0; }
+    .rs-card { background: var(--card); border: 1px solid var(--border); padding: 14px; }
+    .rs-label { font-size: 12px; color: var(--muted); letter-spacing: 2px; margin-bottom: 6px; }
+    .rs-val { font-size: 20px; font-weight: 700; }
+    .rs-val.win { color: var(--green); } .rs-val.loss { color: var(--red);   }
+    .rs-stocks-title { font-size: 14px; color: var(--muted); letter-spacing: 2px; margin-bottom: 12px; text-align: left; }
+    .rs-stocks { display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px; text-align: left; }
+    .rs-stock { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--border); padding: 12px 18px; font-size: 15px; }
+    .rs-name { flex: 1; font-size: 16px; font-family: var(--sans); font-weight: bold; }
+    .rs-pct { font-size: 18px; font-weight: 700; min-width: 80px; text-align: right; }
+    .rs-pct.up { color: var(--green); } .rs-pct.dn { color: var(--red);   }
+    .rs-price { font-size: 15px; color: var(--muted); min-width: 100px; text-align: right; }
+    .result-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .result-actions .btn { font-size: 16px; padding: 14px 35px; font-weight: bold; }
+
+    @media (max-width: 850px) { .stock-grid, .charts-area { grid-template-columns: repeat(2,1fr); } .result-cards { grid-template-columns: repeat(2,1fr); } .port-bar { grid-template-columns: 1fr; } }
+    @media (max-width: 550px) { .stock-grid, .charts-area { grid-template-columns: 1fr; } .vol-wrap { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="scanline"></div>
+
+  <div id="game-hud">
+    <div id="hud-logo">◈ TICKER 180</div>
+    <div class="hud-chip">BALANCE <span id="hud-bal">1,000,000</span> KRW</div>
+    <div class="hud-chip">P&amp;L <span id="hud-pnl" style="color:var(--green)">+0</span></div>
+
+    <div class="hud-chip" style="border-color:var(--yellow);">🏆 BEST <span id="hud-best" style="color:var(--yellow)">--</span></div>
+    <div id="hud-timer">03:00 (대기중)</div>
+
+    <div class="vol-wrap">
+      <span>🔊</span>
+      <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.2" oninput="if(typeof updateVolume==='function') updateVolume(this.value)">
+    </div>
+
+    <a href="/" class="btn btn-red" style="font-size:12px; padding:8px 14px; letter-spacing:1px; font-weight:bold;">✕ EXIT</a>
+  </div>
+
+  <div id="game-wrap">
+    <div id="game-area"></div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/stocks.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+  <script>
+    // 최초 인터페이스 클릭 바인딩 오디오 웜업
+    document.body.addEventListener('click', () => {
+      if (typeof initAudioAndPlayBGM === 'function') initAudioAndPlayBGM();
+    }, { once: true });
+
+    // 저장소 볼륨 초기 로드 동기화 보정
+    const initVol = localStorage.getItem('ticker180_vol') || 0.2;
+    const vSlider = document.getElementById('vol-slider');
+    if (vSlider) vSlider.value = initVol;
+    if (typeof STATE !== 'undefined') STATE.masterVolume = parseFloat(initVol);
+
+    STATE.displayedStocks = rollStocks();
+    render();
+
+    // 볼륨 슬라이더 — game.js 로드 후 바인딩
+    const volSliderEl = document.getElementById('vol-slider');
+    if (volSliderEl) {
+      volSliderEl.addEventListener('input', (e) => updateVolume(e.target.value));
+    }
+  </script>
+</body>
+</html>

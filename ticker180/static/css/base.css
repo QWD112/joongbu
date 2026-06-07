@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:     #0a0e1a;
+  --bg2:    #111827;
+  --bg3:    #1a2035;
+  --card:   #151e30;
+  --border: #2a3550;
+  --green:  #00ff88;
+  --red:    #ff4466;
+  --yellow: #ffd700;
+  --blue:   #4488ff;
+  --purple: #aa66ff;
+  --text:   #e0e8ff;
+  --muted:  #5a6a8a;
+  --mono:   'Share Tech Mono', monospace;
+  --sans:   'Noto Sans KR', sans-serif;
+}
+
+body {
+  font-family: var(--mono);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-size: 14px;
+}
+
+.scanline {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 2px,
+    rgba(0,255,136,0.012) 2px, rgba(0,255,136,0.012) 4px
+  );
+}
+
+.btn {
+  background: transparent;
+  border: 1px solid;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 2px;
+  transition: all .15s;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn-green  { border-color: var(--green);  color: var(--green); }
+.btn-green:hover  { background: var(--green);  color: #000; }
+.btn-yellow { border-color: var(--yellow); color: var(--yellow); }
+.btn-yellow:hover:not(:disabled) { background: var(--yellow); color: #000; }
+.btn-blue   { border-color: var(--blue);   color: var(--blue); }
+.btn-blue:hover   { background: var(--blue);   color: #000; }
+.btn-red    { border-color: var(--red);    color: var(--red); }
+.btn-red:hover    { background: var(--red);    color: #fff; }
+.btn:disabled { opacity: .3; cursor: not-allowed; }
+
+@keyframes blink   { 50% { opacity: .35; } }
+@keyframes fadeIn  { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes glitch  {
+  0%,100% { transform: none; }
+  20% { transform: translateX(-2px) skewX(-1deg); }
+  40% { transform: translateX(2px) skewX(1deg); }
+  60% { transform: translateX(-1px); }
+}

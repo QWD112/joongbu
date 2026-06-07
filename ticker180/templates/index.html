@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TICKER 180 — 틱택 트레이드</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  <style>
+    /* ── 랜딩 전용 스타일 ──────────────────────────── */
+    .landing { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; position: relative; overflow-x: hidden; }
+    .landing::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,255,136,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,136,0.04) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+
+    /* 볼륨 조절 영역 스타일 */
+    .vol-ctrl { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 12px; background: var(--bg2); padding: 8px 15px; border: 1px solid var(--border); border-radius: 4px; z-index: 1000; }
+    .vol-ctrl span { color: var(--green); font-size: 16px; }
+    input[type="range"] { -webkit-appearance: none; width: 100px; height: 6px; background: var(--border); border-radius: 3px; outline: none; cursor: pointer; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: var(--green); border-radius: 50%; cursor: pointer; }
+
+    .logo-area { text-align: center; margin-bottom: 50px; animation: fadeIn .8s ease; }
+    .logo-pre { font-size: 13px; letter-spacing: 6px; color: var(--muted); margin-bottom: 12px; }
+    .logo-main { font-size: clamp(40px, 8vw, 80px); font-weight: 700; letter-spacing: 8px; color: var(--green); text-shadow: 0 0 30px rgba(0,255,136,0.4); animation: glitch 6s infinite; line-height: 1; }
+    .logo-sub { font-size: 16px; letter-spacing: 4px; color: var(--yellow); margin-top: 12px; }
+    .rules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; max-width: 800px; width: 100%; margin-bottom: 40px; animation: fadeIn 1s ease .2s both; }
+    .rule-card { background: rgba(21, 30, 48, 0.7); border: 1px solid var(--border); border-left: 3px solid var(--green); padding: 20px; }
+    .rule-icon { font-size: 24px; margin-bottom: 10px; }
+    .rule-title { font-size: 14px; color: var(--green); letter-spacing: 2px; margin-bottom: 8px; font-weight: bold; }
+    .rule-desc  { font-size: 13px; color: var(--text); line-height: 1.6; font-family: var(--sans); }
+    .market-sectors-wrap { max-width: 800px; width: 100%; margin-bottom: 50px; animation: fadeIn 1s ease .4s both; text-align: center; background: rgba(0, 0, 0, 0.3); border: 1px dashed var(--border); padding: 24px; }
+    .sectors-title { font-size: 16px; font-weight: bold; color: var(--text); letter-spacing: 2px; margin-bottom: 8px; }
+    .sectors-desc { font-size: 13px; color: var(--muted); font-family: var(--sans); margin-bottom: 20px; }
+    .theme-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    .theme-box { padding: 12px; border: 1px solid var(--border); background: var(--bg2); text-align: center; min-width: 140px; flex: 1 1 calc(33.333% - 12px); }
+    .theme-box.a { border-top: 3px solid #4488ff; } .theme-box.b { border-top: 3px solid #ff44ff; } .theme-box.c { border-top: 3px solid var(--green); } .theme-box.d { border-top: 3px solid var(--yellow); } .theme-box.e { border-top: 3px solid var(--red); animation: blink 2s infinite; }
+    .tb-name { font-size: 15px; font-weight: bold; margin-bottom: 6px; letter-spacing: 1px; }
+    .tb-count { font-size: 13px; color: var(--muted); font-family: var(--sans); }
+    .theme-box.a .tb-name { color: #4488ff; } .theme-box.b .tb-name { color: #ff44ff; } .theme-box.c .tb-name { color: var(--green); } .theme-box.d .tb-name { color: var(--yellow); } .theme-box.e .tb-name { color: var(--red); }
+    .start-btn { font-size: 18px; padding: 18px 50px; letter-spacing: 4px; animation: fadeIn 1s ease .6s both; font-weight: bold; }
+    .start-btn:hover { box-shadow: 0 0 25px rgba(0,255,136,0.4); }
+    .disclaimer { margin-top: 30px; font-size: 12px; color: var(--muted); letter-spacing: 1px; text-align: center; animation: fadeIn 1s ease .8s both; }
+    .version { position: fixed; bottom: 16px; right: 16px; font-size: 12px; color: var(--border); letter-spacing: 2px; }
+    @media (max-width: 650px) { .rules-grid { grid-template-columns: 1fr; } .theme-box { flex: 1 1 45%; } }
+  </style>
+</head>
+<body>
+  <div class="scanline"></div>
+
+  <div class="vol-ctrl">
+    <span>🔊</span>
+    <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.2">
+  </div>
+
+  <main class="landing">
+    <div class="logo-area">
+      <div class="logo-pre">[ ONLINE GAME DEVELOPMENT CHALLENGE ]</div>
+      <div class="logo-main">TICKER 180</div>
+      <div class="logo-sub">틱택 트레이드  v2.0</div>
+      <div id="bgm-hint" style="color:var(--yellow); margin-top:20px; font-size:14px; font-weight:bold; animation: blink 1.5s infinite;">
+        [ 화면을 클릭하면 사운드가 활성화됩니다 ]
+      </div>
+    </div>
+
+    <div class="rules-grid">
+      <div class="rule-card"><div class="rule-icon">🎲</div><div class="rule-title">RANDOM POOL</div><div class="rule-desc">30개의 가상 종목 중 매번 새로운 9개가 무작위 추출됩니다. </br> 같은 판은 존재하지 않습니다.</div></div>
+      <div class="rule-card"><div class="rule-icon">📊</div><div class="rule-title">PICK 3</div><div class="rule-desc">상장된 9개 중 3개를 골라 포트폴리오를 구성하세요. </br> 전략적인 선택이 수익의 절반입니다.</div></div>
+      <div class="rule-card"><div class="rule-icon">⏱</div><div class="rule-title">3 MIN TIMEOUT</div><div class="rule-desc">3분(180초) 안에 승부를 보세요. </br> 종료 시점의 잔고가 최종 수익률이 됩니다.</div></div>
+      <div class="rule-card"><div class="rule-icon">📰</div><div class="rule-title">BREAKING NEWS</div><div class="rule-desc">돌발 뉴스가 터지면 주가가 요동칩니다. </br> 뉴스의 흐름을 읽고 차트를 주시하세요.</div></div>
+    </div>
+
+    <div class="market-sectors-wrap">
+      <div class="sectors-title">◈ 상장 섹터 안내</div>
+      <div class="sectors-desc">섹터마다 변동성과 리스크가 다릅니다.</div>
+      <div class="theme-row">
+        <div class="theme-box a"><div class="tb-name">[A] 우주/테크</div><div class="tb-count">고위험 / 고수익</div></div>
+        <div class="theme-box b"><div class="tb-name">[B] 엔터/버추얼</div><div class="tb-count">팬덤 / 테마주</div></div>
+        <div class="theme-box c"><div class="tb-name">[C] 안정 우량주</div><div class="tb-count">저위험 / 방어주</div></div>
+        <div class="theme-box d"><div class="tb-name">[D] 바이오/데이터</div><div class="tb-count">중위험 / 이슈민감</div></div>
+        <div class="theme-box e"><div class="tb-name">[E] 밈/크립토 ⚠</div><div class="tb-count">초고위험 / 도박성</div></div>
+      </div>
+    </div>
+
+    <a href="/game" class="btn btn-green start-btn">▶ ENTER MARKET</a>
+    <div class="disclaimer">* 본 게임은 순수 시뮬레이션입니다. *</div>
+  </main>
+
+  <div class="version">TICKER 180  v2.0</div>
+
+  <script>
+    const slider = document.getElementById('vol-slider');
+    slider.value = localStorage.getItem('ticker180_vol') || 0.2;
+    slider.addEventListener('input', (e) => {
+      localStorage.setItem('ticker180_vol', e.target.value);
+    });
+
+    let bgmStarted = false;
+    let landingInterval = null;
+
+    document.body.addEventListener('click', () => {
+      if (bgmStarted) return;
+      bgmStarted = true;
+      document.getElementById('bgm-hint').style.display = 'none';
+
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // [1번 화면 - 메인 랜딩 BGM]: 아주 깊고 신비롭게 퍼지는 우주 느낌의 신스 앰비언트 코드
+      landingInterval = setInterval(() => {
+        const v = parseFloat(slider.value);
+        if (v <= 0) return;
+
+        const chord = [130.81, 196.00, 246.94]; // 부드럽고 웅장한 Cmaj7 계열 저음 화음
+        chord.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          gain.gain.setValueAtTime(v * 0.12, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.5);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 2.5);
+        });
+      }, 2500);
+    }, { once: true });
+  </script>
+</body>
+</html>
